@@ -1,0 +1,12 @@
+{
+  "name": "fluid-variation",
+  "version": "1.0.0",
+  "packageManager": "pnpm@10",
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "dev": "pnpm -r --parallel --filter ./apps/* dev",
+    "build": "pnpm -r build",
+    "lint": "echo \"(add eslint if needed)\"",
+    "test": "echo \"(add vitest if needed)\""
+  }
+}
