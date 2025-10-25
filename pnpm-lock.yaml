@@ -13,6 +13,9 @@ importers:
       '@fluid/glsl':
         specifier: workspace:*
         version: link:../../packages/glsl
+      '@fluid/tsl':
+        specifier: workspace:*
+        version: link:../../packages/tsl
       lil-gui:
         specifier: ^0.21.0
         version: 0.21.0
@@ -34,6 +37,19 @@ importers:
         version: 7.1.12
 
   packages/glsl: {}
+
+  packages/tsl:
+    dependencies:
+      three:
+        specifier: ^0.180.0
+        version: 0.180.0
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ^2.3.0
+        version: 2.3.0
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
 
 packages:
 
