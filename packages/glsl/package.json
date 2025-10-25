@@ -2,7 +2,13 @@
   "name": "@fluid/glsl",
   "version": "0.0.0",
   "type": "module",
+  "types": "./src/index.d.ts",
   "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
     "./*": "./src/*.glsl"
   }
 }

@@ -10,6 +10,9 @@ importers:
 
   apps/basic:
     dependencies:
+      '@fluid/glsl':
+        specifier: workspace:*
+        version: link:../../packages/glsl
       lil-gui:
         specifier: ^0.21.0
         version: 0.21.0
