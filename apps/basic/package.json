@@ -6,10 +6,19 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "fix": "pnpm run _lint && pnpm run _format",
+    "_lint": "biome lint --write .",
+    "_format": "biome format --write ."
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.3.0",
+    "@types/three": "^0.180.0",
     "typescript": "~5.9.3",
     "vite": "^7.1.7"
+  },
+  "dependencies": {
+    "lil-gui": "^0.21.0",
+    "three": "^0.180.0"
   }
 }
