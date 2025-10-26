@@ -7,8 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "fix": "pnpm run _lint && pnpm run _format",
-    "_lint": "biome lint --write .",
+    "fix": "pnpm run _tsc && pnpm run _lint && pnpm run _format",
+    "_tsc": "tsc --noEmit",
+    "_lint": "biome check .",
     "_format": "biome format --write ."
   },
   "devDependencies": {

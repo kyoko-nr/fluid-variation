@@ -1,12 +1,16 @@
+import {
+  advect as advectVelFrag,
+  divergence as divergenceFrag,
+  pressureJacobi as pressureJacobiFrag,
+  subtractGradient as subtractGradientFrag,
+} from "@fluid/glsl";
 import * as THREE from "three";
-
-import { PointerManager } from "./PointerManager";
 import { DebugVisualizer } from "./debug";
-import {advect as advectVelFrag, divergence as divergenceFrag, pressureJacobi as pressureJacobiFrag, subtractGradient as subtractGradientFrag} from "@fluid/glsl";
+import addForceFrag from "./glsl/addForce.glsl?raw";
 import renderFrag from "./glsl/render.glsl?raw";
 import vert from "./glsl/vert.glsl?raw";
 import { setupGui, simulationConfig } from "./gui";
-import addForceFrag from "./glsl/addForce.glsl?raw";
+import { PointerManager } from "./PointerManager";
 
 // マウス・タッチイベントを管理するオブジェクト
 const pointerManager = new PointerManager();

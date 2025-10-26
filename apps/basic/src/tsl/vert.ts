@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import { Fn, nodeObject, positionLocal, vec4 } from "three/tsl";
 
 /**
