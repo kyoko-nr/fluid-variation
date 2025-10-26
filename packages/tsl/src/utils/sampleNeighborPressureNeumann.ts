@@ -1,43 +1,42 @@
-import {
-	Fn,
-	float,
-	convertToTexture,
-	nodeObject,
-	uv,
-	vec2,
-	If,
-} from "three/tsl";
+import { Fn, float, convertToTexture, nodeObject, uv, vec2, If } from "three/tsl";
+import type Node from "three/src/nodes/core/Node.js";
 
 /**
  * Samples neighbor pressure while enforcing a Neumann boundary (zero gradient).
  */
 export const sampleNeighborPressureNeumann = /*#__PURE__*/ Fn(
-	([textureNodeInput, uvNode, texelSizeNode, dirNode, centerValue]) => {
-		const textureNode = convertToTexture(textureNodeInput);
-		const uvValue = nodeObject(uvNode) || textureNode.uvNode || uv();
-		const texelSize = nodeObject(texelSizeNode) || vec2(1.0, 1.0);
-		const dir = nodeObject(dirNode) || vec2(0.0, 0.0);
-		const pCenter = nodeObject(centerValue) || float(0.0);
+  ([textureNodeInput, uvNode, texelSizeNode, dirNode, centerValue]: [
+    Node,
+    Node,
+    Node,
+    Node,
+    Node,
+  ]) => {
+    const uTexture = convertToTexture(textureNodeInput);
+    const uUv = nodeObject(uvNode) || uTexture.uvNode || uv();
+    const uTexelSize = nodeObject(texelSizeNode) || vec2(1.0, 1.0);
+    const uDir = nodeObject(dirNode) || vec2(0.0, 0.0);
+    const uCenter = nodeObject(centerValue) || float(0.0);
 
-		const edge = texelSize.mul(0.5);
-		const maxUV = vec2(1.0, 1.0).sub(edge);
+    const edge = uTexelSize.mul(0.5);
+    const maxUV = vec2(1.0, 1.0).sub(edge);
 
-		const offset = uvValue.add(dir.mul(texelSize));
-		const pNeighbor = textureNode.sample(offset).z.toVar();
+    const offset = uUv.add(uDir.mul(uTexelSize));
+    const pNeighbor = uTexture.sample(offset).z.toVar();
 
-		If(uvValue.x.lessThanEqual(edge.x).and(dir.x.lessThan(0.0)), () => {
-			pNeighbor.assign(pCenter);
-		});
-		If(uvValue.x.greaterThanEqual(maxUV.x).and(dir.x.greaterThan(0.0)), () => {
-			pNeighbor.assign(pCenter);
-		});
-		If(uvValue.y.lessThanEqual(edge.y).and(dir.y.lessThan(0.0)), () => {
-			pNeighbor.assign(pCenter);
-		});
-		If(uvValue.y.greaterThanEqual(maxUV.y).and(dir.y.greaterThan(0.0)), () => {
-			pNeighbor.assign(pCenter);
-		});
+    If(uUv.x.lessThanEqual(edge.x).and(uDir.x.lessThan(0.0)), () => {
+      pNeighbor.assign(uCenter);
+    });
+    If(uUv.x.greaterThanEqual(maxUV.x).and(uDir.x.greaterThan(0.0)), () => {
+      pNeighbor.assign(uCenter);
+    });
+    If(uUv.y.lessThanEqual(edge.y).and(uDir.y.lessThan(0.0)), () => {
+      pNeighbor.assign(uCenter);
+    });
+    If(uUv.y.greaterThanEqual(maxUV.y).and(uDir.y.greaterThan(0.0)), () => {
+      pNeighbor.assign(uCenter);
+    });
 
-		return pNeighbor;
-	},
+    return pNeighbor;
+  },
 );
