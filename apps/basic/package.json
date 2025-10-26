@@ -7,9 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "fix": "pnpm run _tsc && pnpm run _lint && pnpm run _format",
+    "fix": "pnpm run _lint && pnpm run _format && pnpm run _tsc",
     "_tsc": "tsc --noEmit",
-    "_lint": "biome check .",
+    "_lint": "biome lint --write .",
     "_format": "biome format --write ."
   },
   "devDependencies": {
@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@fluid/glsl": "workspace:*",
+    "@fluid/tsl": "workspace:*",
     "lil-gui": "^0.21.0",
     "three": "^0.180.0"
   }
