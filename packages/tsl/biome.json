@@ -8,12 +8,12 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "correctness": {
-        "noUnknownProperty": "error",
-        "noVoid": "error"
-      },      
       "complexity": {
-        "noUselessTypeConstraint": "error"
+        "noUselessTypeConstraint": "error",
+        "noVoid": "error"
+      },
+      "correctness": {
+        "noUnknownProperty": "error"
       },
       "suspicious": {
         "noExplicitAny": "error"

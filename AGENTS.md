@@ -27,6 +27,10 @@
 - 言語: TypeScript（厳格設定）。GLSL は `packages/glsl/src` に配置。
 - ファイル名: TS は `camelCase.ts`、GLSL ヘルパは `src/utils/camelCase.glsl`。
 - モジュール: ESM（`type: module`）。明示的エクスポートと相対インポートを推奨。
+- unknown型の使用は禁止
+- asによる型アサーションは禁止
+- 1文字の変数は禁止
+- 安易にtypesディレクトリで*.d.tsを作成し、anyやunknowを駆使して型エラーを回避するのは禁止
 
 ## テスト指針
 - 現状フレームワーク未設定。提案: Vitest。
