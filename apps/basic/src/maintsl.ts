@@ -1,17 +1,15 @@
 import {
-  advect as advectVelFrag,
-  divergence as divergenceFrag,
-  pressureJacobi as pressureJacobiFrag,
-  subtractGradient as subtractGradientFrag,
+  createAdvectMat,
+  createDivergenceMat,
+  createPressureMat,
+  createSubtractMat,
 } from "@fluid/tsl";
 import * as THREE from "three";
-import { WebGPURenderer, NodeMaterial } from "three/webgpu";
-import { createAddForceFrag } from "./tsl/createAddForceFrag";
-import { renderVelocity } from "./tsl/render";
-import { createVertex } from "./tsl/createVertex";
+import { WebGPURenderer } from "three/webgpu";
+import { createAddForceMat } from "./tsl/createAddForceMat";
+import { createRenderMat } from "./tsl/createRenderMat";
 import { setupGui, simulationConfig } from "./gui";
 import { PointerManager } from "./PointerManager";
-import type { NodeWithUniformMaterial } from "./types/material";
 import { DebugVisualizerTsl } from "./debugTsl";
 
 // マウス・タッチイベントを管理するオブジェクト
@@ -37,12 +35,12 @@ let dataTexture: THREE.WebGLRenderTarget;
 let dataRenderTarget: THREE.WebGLRenderTarget;
 
 // シミュレーション及び描画に使用するTSLシェーダーを設定したマテリアル
-let addForceShader: NodeWithUniformMaterial;
-let advectVelShader: NodeWithUniformMaterial;
-let divergenceShader: NodeWithUniformMaterial;
-let pressureShader: NodeWithUniformMaterial;
-let subtractGradientShader: NodeWithUniformMaterial;
-let renderShader: NodeWithUniformMaterial;
+let addForceShader: ReturnType<typeof createAddForceMat>;
+let advectVelShader: ReturnType<typeof createAdvectMat>;
+let divergenceShader: ReturnType<typeof createDivergenceMat>;
+let pressureShader: ReturnType<typeof createPressureMat>;
+let subtractGradientShader: ReturnType<typeof createSubtractMat>;
+let renderShader: ReturnType<typeof createRenderMat>;
 
 let debugVisualizer: DebugVisualizerTsl;
 
@@ -80,66 +78,14 @@ async function init() {
   clearRenderTarget(dataRenderTarget);
 
   // シミュレーションで使用するシェーダーを作成
-  addForceShader = new NodeMaterial();
-  addForceShader.vertexNode = createVertex();
-  addForceShader.fragmentNode = createAddForceFrag();
-  // addForceShader.uniforms = {
-  //   uData: new THREE.Uniform(null),
-  //   uTexelSize: new THREE.Uniform(texelSize),
-  //   uForceCenter: new THREE.Uniform(new THREE.Vector2()),
-  //   uForceDeltaV: new THREE.Uniform(new THREE.Vector2()),
-  //   uForceRadius: new THREE.Uniform(simulationConfig.forceRadius),
-  // };
-
-  advectVelShader = new NodeMaterial();
-  advectVelShader.vertexNode = createVertex();
-  advectVelShader.fragmentNode = advectVelFrag();
-  // advectVelShader.uniforms = {
-  //   uData: new THREE.Uniform(null),
-  //   uTexelSize: new THREE.Uniform(texelSize),
-  //   uDissipation: new THREE.Uniform(simulationConfig.dissipation),
-  //   uDeltaT: new THREE.Uniform(simulationConfig.deltaT),
-  // };
-
-  divergenceShader = new NodeMaterial();
-  divergenceShader.vertexNode = createVertex();
-  divergenceShader.fragmentNode = divergenceFrag();
-  // divergenceShader.uniforms = {
-  //   uData: new THREE.Uniform(null),
-  //   uTexelSize: new THREE.Uniform(texelSize),
-  //   uDeltaT: new THREE.Uniform(simulationConfig.deltaT),
-  // };
-
-  pressureShader = new NodeMaterial();
-  pressureShader.vertexNode = createVertex();
-  pressureShader.fragmentNode = pressureJacobiFrag();
-  // pressureShader.uniforms = {
-  //   uData: new THREE.Uniform(null),
-  //   uTexelSize: new THREE.Uniform(texelSize),
-  //   uDeltaT: new THREE.Uniform(simulationConfig.deltaT),
-  // };
-
-  subtractGradientShader = new NodeMaterial();
-  subtractGradientShader.vertexNode = createVertex();
-  subtractGradientShader.fragmentNode = subtractGradientFrag();
-  // subtractGradientShader.uniforms = {
-  //   uData: new THREE.Uniform(null),
-  //   uTexelSize: new THREE.Uniform(texelSize),
-  //   uDeltaT: new THREE.Uniform(simulationConfig.deltaT),
-  // };
+  addForceShader = createAddForceMat();
+  advectVelShader = createAdvectMat();
+  divergenceShader = createDivergenceMat();
+  pressureShader = createPressureMat();
+  subtractGradientShader = createSubtractMat();
 
   // 描画に使用するシェーダーを作成
-  renderShader = new NodeMaterial();
-  renderShader.vertexNode = createVertex();
-  renderShader.fragmentNode = renderVelocity();
-  // renderShader.uniforms = {
-  //   uTexture: new THREE.Uniform(null),
-  //   uTextureSize: new THREE.Uniform(new THREE.Vector2()),
-  //   uTimeStep: new THREE.Uniform(0),
-  //   uColorStrength: new THREE.Uniform(simulationConfig.colorStrength),
-  //   uBgColor: new THREE.Uniform(simulationConfig.bgColor),
-  //   uFluidColor: new THREE.Uniform(simulationConfig.fluidColor),
-  // };
+  renderShader = createRenderMat();
 
   // GUI のセットアップ
   setupGui();
@@ -182,7 +128,6 @@ function onWindowResize() {
   divergenceShader.uniforms?.uTexelSize.value.copy(texelSize);
   pressureShader.uniforms?.uTexelSize.value.copy(texelSize);
   subtractGradientShader.uniforms?.uTexelSize.value.copy(texelSize);
-  renderShader.uniforms?.uTextureSize.value.set(1 / newWidth, 1 / newHeight);
 }
 
 /**
@@ -196,13 +141,12 @@ function tick() {
     .getDelta()
     .multiply(texelSize)
     .multiplyScalar(simulationConfig.forceCoefficient);
-  const addForceUniforms = addForceShader.uniforms;
-  if (addForceUniforms) {
-    addForceUniforms.uData.value = dataTexture.texture;
-    addForceUniforms.uForceCenter.value.copy(pointerManager.pointer.clone().multiply(texelSize));
-    addForceUniforms.uForceDeltaV.value.copy(deltaV);
-    addForceUniforms.uForceRadius.value = simulationConfig.forceRadius;
-  }
+  addForceShader.uniforms.uData.value = dataTexture.texture;
+  addForceShader.uniforms.uForceCenter.value.copy(
+    pointerManager.pointer.clone().multiply(texelSize),
+  );
+  addForceShader.uniforms.uForceDeltaV.value.copy(deltaV);
+  addForceShader.uniforms.uForceRadius.value = simulationConfig.forceRadius;
 
   render(addForceShader, dataRenderTarget);
   swapTexture();
@@ -211,47 +155,32 @@ function tick() {
   debugVisualizer.render(dataTexture.texture);
 
   // 2. 移流の計算：セミラグランジュ法による速度の移流
-  const advectUniforms = advectVelShader.uniforms;
-  if (advectUniforms) {
-    advectUniforms.uData.value = dataTexture.texture;
-    advectUniforms.uDeltaT.value = simulationConfig.deltaT;
-    advectUniforms.uDissipation.value = simulationConfig.dissipation;
-  }
+  advectVelShader.uniforms.uData.value = dataTexture.texture;
+  advectVelShader.uniforms.uDeltaT.value = simulationConfig.deltaT;
+  advectVelShader.uniforms.uDissipation.value = simulationConfig.dissipation;
   render(advectVelShader, dataRenderTarget);
   swapTexture();
 
   // 3. 発散の計算
-  const divercenceUniforms = divergenceShader.uniforms;
-  if (divercenceUniforms) {
-    divercenceUniforms.uData.value = dataTexture.texture;
-  }
+  divergenceShader.uniforms.uData.value = dataTexture.texture;
   render(divergenceShader, dataRenderTarget);
   swapTexture();
 
   // 4. 圧力の計算（ヤコビ反復を複数回）
-  const pressureUniforms = pressureShader.uniforms;
   for (let i = 0; i < simulationConfig.solverIteration; i++) {
-    if (pressureUniforms) {
-      pressureUniforms.uData.value = dataTexture.texture;
-    }
+    pressureShader.uniforms.uData.value = dataTexture.texture;
     render(pressureShader, dataRenderTarget);
     swapTexture();
   }
 
   // 5. 圧力勾配の減算
-  const subtractUniforms = subtractGradientShader.uniforms;
-  if (subtractUniforms) {
-    subtractUniforms.uData.value = dataTexture.texture;
-    subtractUniforms.uDeltaT.value = simulationConfig.deltaT;
-  }
+  subtractGradientShader.uniforms.uData.value = dataTexture.texture;
+  subtractGradientShader.uniforms.uDeltaT.value = simulationConfig.deltaT;
   render(subtractGradientShader, dataRenderTarget);
   swapTexture();
 
   // 6. 描画：更新された速度場を使って流体の見た目をレンダリングします。
-  const renderUniforms = renderShader.uniforms;
-  if (renderUniforms) {
-    renderUniforms.uTexture.value = dataTexture.texture;
-  }
+  renderShader.uniforms.uTexture.value = dataTexture.texture;
   render(renderShader, null);
 
   // 次のフレームに備えて後処理

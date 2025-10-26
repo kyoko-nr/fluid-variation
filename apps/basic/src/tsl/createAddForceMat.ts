@@ -1,14 +1,15 @@
-import { applyReflectiveBoundary } from "@fluid/tsl";
-import { Fn, float, max, min, uniform, uniformTexture, uv, vec2, vec4 } from "three/tsl";
+import { applyReflectiveBoundary, assignUniforms, createVertex } from "@fluid/tsl";
+import { float, max, min, uniform, uniformTexture, uv, vec2, vec4 } from "three/tsl";
 import * as THREE from "three";
 import { simulationConfig } from "../gui";
+import { NodeMaterial } from "three/webgpu";
 
 const EPSILON = 1e-6;
 
 /**
  * addForce.glsl を TSL に移植したフラグメントロジック。
  */
-export const createAddForceFrag = Fn(() => {
+export const createAddForceMat = () => {
   const uData = uniformTexture(new THREE.Texture());
   const uTexelSize = uniform(new THREE.Vector2());
   const uForceCenter = uniform(new THREE.Vector2());
@@ -30,5 +31,18 @@ export const createAddForceFrag = Fn(() => {
   const injected = data.xy.add(uForceDeltaV.mul(falloff));
   const reflected = applyReflectiveBoundary(uvNode, uTexelSize, injected, 1.0);
 
-  return vec4(reflected.x, reflected.y, data.z, data.w);
-});
+  const frag = vec4(reflected.x, reflected.y, data.z, data.w);
+  const vert = createVertex();
+
+  const material = new NodeMaterial();
+  material.fragmentNode = frag;
+  material.vertexNode = vert;
+
+  return assignUniforms(material, {
+    uData,
+    uTexelSize,
+    uForceCenter,
+    uForceDeltaV,
+    uForceRadius,
+  });
+};

@@ -1,9 +1,14 @@
 import * as THREE from "three";
 import { NodeMaterial, type WebGPURenderer } from "three/webgpu";
 import { simulationConfig } from "./gui";
-import type { NodeWithUniformMaterial } from "./types/material";
-import { createVertex } from "./tsl/createVertex";
+import { createVertex } from "../../../packages/tsl/src/createVertex";
 import { debugVis } from "./tsl/debugVis";
+import { assignUniforms } from "@fluid/tsl";
+import type { MaterialWithUniform } from "@fluid/tsl";
+
+type Uniforms = {
+  uTexture: THREE.Uniform;
+};
 
 export class DebugVisualizerTsl {
   private canvas: HTMLCanvasElement;
@@ -11,7 +16,7 @@ export class DebugVisualizerTsl {
   private scene: THREE.Scene;
   private camera: THREE.OrthographicCamera;
   private quad: THREE.Mesh;
-  private debugMaterial: NodeWithUniformMaterial;
+  private debugMaterial: MaterialWithUniform<NodeMaterial, Uniforms>;
   private debugRenderTarget: THREE.WebGLRenderTarget;
   private canvasContext: CanvasRenderingContext2D;
   private pixelBuffer: Uint8Array;
@@ -36,15 +41,12 @@ export class DebugVisualizerTsl {
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
     // デバッグ描画用のシェーダーマテリアル
-    this.debugMaterial = new NodeMaterial();
-    this.debugMaterial.vertexNode = createVertex();
-    this.debugMaterial.fragmentNode = debugVis();
-    // this.debugMaterial.uniforms = {
-    //   uTexture: new THREE.Uniform(null),
-    //   uChannel: new THREE.Uniform(this.config.channel),
-    //   uScale: new THREE.Uniform(this.config.scale),
-    //   uOffset: new THREE.Uniform(this.config.offset),
-    // }
+    const material = new NodeMaterial();
+    material.vertexNode = createVertex();
+    material.fragmentNode = debugVis();
+    this.debugMaterial = assignUniforms(material, {
+      uTexture: new THREE.Uniform(null),
+    });
 
     // 全画面を覆う平面メッシュ
     this.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.debugMaterial);
@@ -89,10 +91,7 @@ export class DebugVisualizerTsl {
     this.canvas.classList.remove("hidden");
 
     // 共有レンダラーでRenderTargetに描画
-    const uniforms = this.debugMaterial.uniforms;
-    if (uniforms) {
-      uniforms.uTexture.value = texture;
-    }
+    this.debugMaterial.uniforms.uTexture.value = texture;
     this.quad.material = this.debugMaterial;
     this.renderer.setRenderTarget(this.debugRenderTarget);
     this.renderer.render(this.scene, this.camera);
