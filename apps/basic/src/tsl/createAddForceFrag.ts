@@ -1,6 +1,7 @@
 import { applyReflectiveBoundary } from "@fluid/tsl";
 import { Fn, float, max, min, uniform, uniformTexture, uv, vec2, vec4 } from "three/tsl";
 import * as THREE from "three";
+import { simulationConfig } from "../gui";
 
 const EPSILON = 1e-6;
 
@@ -12,7 +13,7 @@ export const createAddForceFrag = Fn(() => {
   const uTexelSize = uniform(new THREE.Vector2());
   const uForceCenter = uniform(new THREE.Vector2());
   const uForceDeltaV = uniform(new THREE.Vector2());
-  const uForceRadius = uniform(0.0);
+  const uForceRadius = uniform(simulationConfig.forceRadius);
 
   const uvNode = uv();
 

@@ -11,8 +11,8 @@ import { renderVelocity } from "./tsl/render";
 import { createVertex } from "./tsl/createVertex";
 import { setupGui, simulationConfig } from "./gui";
 import { PointerManager } from "./PointerManager";
-
-type NodeWithUniformMaterial = NodeMaterial & { uniforms?: Record<string, THREE.Uniform> };
+import type { NodeWithUniformMaterial } from "./types/material";
+import { DebugVisualizerTsl } from "./debugTsl";
 
 // マウス・タッチイベントを管理するオブジェクト
 const pointerManager = new PointerManager();
@@ -43,6 +43,8 @@ let divergenceShader: NodeWithUniformMaterial;
 let pressureShader: NodeWithUniformMaterial;
 let subtractGradientShader: NodeWithUniformMaterial;
 let renderShader: NodeWithUniformMaterial;
+
+let debugVisualizer: DebugVisualizerTsl;
 
 await init();
 
@@ -81,69 +83,69 @@ async function init() {
   addForceShader = new NodeMaterial();
   addForceShader.vertexNode = createVertex();
   addForceShader.fragmentNode = createAddForceFrag();
-  addForceShader.uniforms = {
-    uData: new THREE.Uniform(null),
-    uTexelSize: new THREE.Uniform(texelSize),
-    uForceCenter: new THREE.Uniform(new THREE.Vector2()),
-    uForceDeltaV: new THREE.Uniform(new THREE.Vector2()),
-    uForceRadius: new THREE.Uniform(simulationConfig.forceRadius),
-  };
+  // addForceShader.uniforms = {
+  //   uData: new THREE.Uniform(null),
+  //   uTexelSize: new THREE.Uniform(texelSize),
+  //   uForceCenter: new THREE.Uniform(new THREE.Vector2()),
+  //   uForceDeltaV: new THREE.Uniform(new THREE.Vector2()),
+  //   uForceRadius: new THREE.Uniform(simulationConfig.forceRadius),
+  // };
 
   advectVelShader = new NodeMaterial();
   advectVelShader.vertexNode = createVertex();
   advectVelShader.fragmentNode = advectVelFrag();
-  advectVelShader.uniforms = {
-    uData: new THREE.Uniform(null),
-    uTexelSize: new THREE.Uniform(texelSize),
-    uDissipation: new THREE.Uniform(simulationConfig.dissipation),
-    uDeltaT: new THREE.Uniform(simulationConfig.deltaT),
-  };
+  // advectVelShader.uniforms = {
+  //   uData: new THREE.Uniform(null),
+  //   uTexelSize: new THREE.Uniform(texelSize),
+  //   uDissipation: new THREE.Uniform(simulationConfig.dissipation),
+  //   uDeltaT: new THREE.Uniform(simulationConfig.deltaT),
+  // };
 
   divergenceShader = new NodeMaterial();
   divergenceShader.vertexNode = createVertex();
   divergenceShader.fragmentNode = divergenceFrag();
-  divergenceShader.uniforms = {
-    uData: new THREE.Uniform(null),
-    uTexelSize: new THREE.Uniform(texelSize),
-    uDeltaT: new THREE.Uniform(simulationConfig.deltaT),
-  };
+  // divergenceShader.uniforms = {
+  //   uData: new THREE.Uniform(null),
+  //   uTexelSize: new THREE.Uniform(texelSize),
+  //   uDeltaT: new THREE.Uniform(simulationConfig.deltaT),
+  // };
 
   pressureShader = new NodeMaterial();
   pressureShader.vertexNode = createVertex();
   pressureShader.fragmentNode = pressureJacobiFrag();
-  pressureShader.uniforms = {
-    uData: new THREE.Uniform(null),
-    uTexelSize: new THREE.Uniform(texelSize),
-    uDeltaT: new THREE.Uniform(simulationConfig.deltaT),
-  };
+  // pressureShader.uniforms = {
+  //   uData: new THREE.Uniform(null),
+  //   uTexelSize: new THREE.Uniform(texelSize),
+  //   uDeltaT: new THREE.Uniform(simulationConfig.deltaT),
+  // };
 
   subtractGradientShader = new NodeMaterial();
   subtractGradientShader.vertexNode = createVertex();
   subtractGradientShader.fragmentNode = subtractGradientFrag();
-  subtractGradientShader.uniforms = {
-    uData: new THREE.Uniform(null),
-    uTexelSize: new THREE.Uniform(texelSize),
-    uDeltaT: new THREE.Uniform(simulationConfig.deltaT),
-  };
+  // subtractGradientShader.uniforms = {
+  //   uData: new THREE.Uniform(null),
+  //   uTexelSize: new THREE.Uniform(texelSize),
+  //   uDeltaT: new THREE.Uniform(simulationConfig.deltaT),
+  // };
 
   // 描画に使用するシェーダーを作成
   renderShader = new NodeMaterial();
   renderShader.vertexNode = createVertex();
   renderShader.fragmentNode = renderVelocity();
-  renderShader.uniforms = {
-    uTexture: new THREE.Uniform(null),
-    uTextureSize: new THREE.Uniform(new THREE.Vector2()),
-    uTimeStep: new THREE.Uniform(0),
-    uColorStrength: new THREE.Uniform(simulationConfig.colorStrength),
-    uBgColor: new THREE.Uniform(simulationConfig.bgColor),
-    uFluidColor: new THREE.Uniform(simulationConfig.fluidColor),
-  };
+  // renderShader.uniforms = {
+  //   uTexture: new THREE.Uniform(null),
+  //   uTextureSize: new THREE.Uniform(new THREE.Vector2()),
+  //   uTimeStep: new THREE.Uniform(0),
+  //   uColorStrength: new THREE.Uniform(simulationConfig.colorStrength),
+  //   uBgColor: new THREE.Uniform(simulationConfig.bgColor),
+  //   uFluidColor: new THREE.Uniform(simulationConfig.fluidColor),
+  // };
 
   // GUI のセットアップ
   setupGui();
 
   // デバッグビジュアライザーの初期化（レンダラーを共有）
-  // debugVisualizer = new DebugVisualizer(renderer);
+  debugVisualizer = new DebugVisualizerTsl(renderer);
 
   // イベントの登録・初期化時点でのサイズ設定処理
   window.addEventListener("resize", onWindowResize);
@@ -205,6 +207,9 @@ function tick() {
   render(addForceShader, dataRenderTarget);
   swapTexture();
 
+  // デバッグビジュアライザーで速度場を表示
+  debugVisualizer.render(dataTexture.texture);
+
   // 2. 移流の計算：セミラグランジュ法による速度の移流
   const advectUniforms = advectVelShader.uniforms;
   if (advectUniforms) {
@@ -248,9 +253,6 @@ function tick() {
     renderUniforms.uTexture.value = dataTexture.texture;
   }
   render(renderShader, null);
-
-  // デバッグビジュアライザーで速度場を表示
-  // debugVisualizer.render(dataTexture.texture);
 
   // 次のフレームに備えて後処理
   pointerManager.updatePreviousPointer();
